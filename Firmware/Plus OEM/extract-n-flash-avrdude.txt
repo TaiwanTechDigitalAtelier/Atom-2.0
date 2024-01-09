@@ -1,0 +1,5 @@
+cd C:\Program Files (x86)\Arduino\hardware\tools\avr\bin
+
+avrdude -C "C:\Program Files (x86)\Arduino\hardware\tools\avr\etc\avrdude.conf" -c stk500 -P COM7 -b 115200 -p m2560 -U flash:r:"C:\Users\ad-user\Desktop\arduino.hex":i
+
+avrdude -C "C:\Program Files (x86)\Arduino\hardware\tools\avr\etc\avrdude.conf" -v -c stk500 -P COM5 -b 115200 -p m2560 -D -U flash:w:"C:\Users\ad-user\Desktop\PlusFW-org.hex":i

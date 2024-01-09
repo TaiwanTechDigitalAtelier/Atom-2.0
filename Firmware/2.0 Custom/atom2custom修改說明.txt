@@ -1,0 +1,189 @@
+======================
+開機註明 - Slash screen
+======================
+修改檔案：ultralcd.cpp
+在 void lcd_init() 的 lcd_implementation_init(); 後面加入
+
+lcd.clear();
+lcd.setCursor(0, 0); lcd_printPGM(PSTR( "    Taiwan Tech     " ));
+lcd.setCursor(0, 1); lcd_printPGM(PSTR( "   Digital Atelier  " ));
+lcd.setCursor(0, 3); lcd_printPGM(PSTR( "     3D Printer     " ));
+
+
+
+=====================
+上鎖介面 - Lock Screen
+=====================
+修改檔案：ultralcd.h
+在 #define LCD_MESSAGE_CPGM(x) lcd_setstatus_PGM(PSTR(x)) 之前加入
+ 
+ void lcd_lockscreen();
+.....
+
+修改檔案：Marlin_main.cpp
+在 char previousFilename[LONG_FILENAME_LENGTH] = ""; 後加入
+ 
+ int lock;
+ 
+在 void setup() 裡
+SERIAL_ECHO_START; 之後加入
+ 
+ lock=1;
+ 
+.....
+
+修改檔案：Ultralcd_implementation_hitachi_HD44780.h
+在 static void lcd_implementation_status_screen() 之前加入 (記的改機台號碼 machine =?)
+
+#include <EEPROM.h>
+void lcd_lockscreen() {
+    uint8_t entercode[4] = {0};
+    uint8_t combination[4] = {0,0,0,0}; //0-63
+    bool lockstate = true;
+    lcd.clear();
+    int save = encoderDiff;
+    int save2 = buttons;
+    uint8_t count=0;
+    encoderDiff=0; //reset in case some fiddle with encoder before you ready for it
+    uint8_t machine =?;
+    lcd.setCursor(0, 0); lcd.print(strcat(strcat(" TTDA 3D PRINTER ",itostr2(machine))," "));
+    lcd.setCursor(0, 1); lcd_printPGM(PSTR( "  Enter User Code.  " ));
+    lcd.setCursor(0, 2); lcd_printPGM(PSTR( "                    " ));
+    lcd.setCursor(0, 3); lcd_printPGM(PSTR( "  [  ][  ][  ][  ]  " ));
+    while(digitalRead(BTN_ENC) == LOW) {}
+    while (lockstate) {
+      for (uint8_t i = 0; i < 4; i++) { 
+        while(digitalRead(BTN_ENC) == HIGH) {
+          entercode[ i ] = encoderDiff/4; 
+          if(entercode[ i ] > 223) entercode[ i ] = entercode[ i ] - 192;
+          lcd.setCursor(3+i*4, 3); lcd.print(itostr2(entercode[ i ]));
+        }
+        while(digitalRead(BTN_ENC) == LOW) {}
+        lcd.setCursor(3+i*4, 3); lcd_printPGM(PSTR("XX"));
+      }
+      //if ((entercode[0] == combination[0]) && (entercode[1] == combination[1]) && (entercode[2] == combination[2]) && (entercode[3] == combination[3]))
+      boolean condition1 = (entercode[0]+entercode[1]+entercode[2])%63 == entercode[3];
+      boolean condition2 = (abs(entercode[0]*entercode[2]-machine))%63 == entercode[1];
+      boolean condition3 = entercode[0]!=EEPROM.read(0) || entercode[2]!=EEPROM.read(1);
+      if (condition1 && condition2 && condition3)  
+      { 
+        lock=0;
+        count=0;
+        EEPROM.update(0, entercode[0]);
+        EEPROM.update(1, entercode[2]);
+        lockstate = false;
+      }
+      else if(EEPROM.read(3)==0 && entercode[0] ==EEPROM.read(4) && entercode[1] ==EEPROM.read(5) && entercode[2] ==EEPROM.read(6) && entercode[3] ==EEPROM.read(7)){
+        lock=0;
+        lockstate = false;
+      }
+      else{
+        lcd.setCursor(0, 1); lcd_printPGM(PSTR( "   Code Incorrect   " ));
+        lcd.setCursor(0, 2); lcd_printPGM(PSTR( "     TRY AGAIN      " ));
+        lcd.setCursor(0, 3); lcd_printPGM(PSTR( "  [  ][  ][  ][  ]  " ));
+        count++;
+        if (count>=3){
+          lockstate = false;
+        }
+      }
+    }
+    buttons = save2;
+    encoderDiff = save; //reset to prevent carry over to other functions
+    return;
+ }
+
+================================
+啟動上鎖介面 - Enable Lock Screen
+================================
+.
+上鎖SD卡選單
+.
+ 修改檔案：ultralcd.cpp
+ 在 int plaPreheatFanSpeed; 之後加入
+ 
+ extern int lock;
+ 
+ 在 static void lcd_main_menu() 裡
+ #ifdef SDSUPPORT 之前加入
+ 
+ if(lock==1){
+  MENU_ITEM(function, "Unlock", lcd_lockscreen);
+  }else{
+ 
+ 並在 END_MENU(); 之前加入
+ 
+ }
+ 
+.....
+ 
+.
+上鎖機台
+.
+ 修改檔案：Marlin_main.cpp
+ 開機上鎖，在 _delay_ms(1000); // wait 1sec to display the splash screen 後加入
+ 
+ lcd_lockscreen();
+ 
+.....
+
+.
+列印完上鎖
+.
+ 修改檔案：Marlin_main.cpp
+ 在 FORCE_INLINE void finished_print() 裡的
+ card.printingHasFinished(); 之前加入
+ 
+ lock=1;
+
+ =====================
+固定/動態密碼切換 - Passcode sstatic/Dynamic Switch
+=====================
+
+在 ultralcd_implementation_hitachi_HD44780.h 裡的
+void lcd_lockscreen(){} function 後面加入 
+
+void status_switch() {
+  lcd.clear();
+  int save = encoderDiff;
+  int save2 = buttons;
+  uint8_t entercode[4] = {0};
+  encoderDiff = 0; //reset in case some fiddle with encoder before you ready for it
+  lcd.setCursor(0, 0); lcd_printPGM(PSTR( " Set New User Code. " ));
+  lcd.setCursor(0, 1); lcd_printPGM(PSTR( " All 00 for Dynamic " ));
+  lcd.setCursor(0, 2); lcd_printPGM(PSTR( "                    " ));
+  lcd.setCursor(0, 3); lcd_printPGM(PSTR( "  [  ][  ][  ][  ]  " ));
+  while (digitalRead(BTN_ENC) == LOW) {}
+  for (uint8_t i = 0; i < 4; i++) {
+    while (digitalRead(BTN_ENC) == HIGH) {
+      entercode[ i ] = encoderDiff / 4;
+      if (entercode[ i ] > 223) entercode[ i ] = entercode[ i ] - 192;
+      lcd.setCursor(3 + i * 4, 3); lcd.print(itostr2(entercode[ i ]));
+    }
+    while (digitalRead(BTN_ENC) == LOW) {}
+    lcd.setCursor(3 + i * 4, 3); lcd_printPGM(PSTR("XX"));
+    _delay_ms(50);
+  }
+  if (entercode[0] == 0 && entercode[1] == 0 && entercode[2] == 0 && entercode[3] == 0) {
+    EEPROM.update(3, 1);
+  }
+  else {
+    EEPROM.update(3, 0);
+    EEPROM.update(4, entercode[0]);
+    EEPROM.update(5, entercode[1]);
+    EEPROM.update(6, entercode[2]);
+    EEPROM.update(7, entercode[3]);
+  }
+buttons = save2;
+encoderDiff = save; //reset to prevent carry over to other functions
+return;
+}
+
+.
+切換menu
+.
+
+在ultralcd.cpp裡的
+lcd_control_menu() 裡的
+MENU_ITEM(function, MSG_RESTORE_FAILSAFE, Config_ResetDefault); 之後加入
+
+if(lock!=1){MENU_ITEM(function, "  " , status_switch);}

@@ -1,0 +1,17 @@
+[ATOM2.0] Test G-CODE files
+
+
+These files are suitable for ATOM 2.0.3 firmware, please follow the instructions of Auto Leveling Settings before printing these files.
+
+https://atom3dp.squarespace.com/firstlayer-1-1/
+
+
+1. 300Height: This is for testing X, Y, Z axis stability and extrusion stability. A consistent ripple warping effect is normal as it cools down, as the wall thickness of the colmn is only one loop thick.
+
+2. Pixel Star: This is for testing tightness of of the slider track, belt tension. Corners should all be 90 degree angles and be sharp.
+
+3. Eiffel_Tower: This is for testing small area per layer prints (with a bounding volume of 20mm x 20mm x 45mm) and cooling fans, as well as the Kisslicer functions: Brim and Pillar.
+
+4. 50x50Vase_for_calibration: This is for testing dimensional accuracy of the printer.  
+
+5. Cart: ATOM 1 carriage model used for learning slicing techniques and orientation

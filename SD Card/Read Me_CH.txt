@@ -1,0 +1,21 @@
+[ATOM2.0] Test files
+
+Last update: 2015/11/18
+
+
+此壓縮檔之檔案為用來測試ATOM2.0組裝是否正確
+
+下列檔案皆為ATOM 2.0.3 Firmware所適用，請先執行完自動校正設定後再執行下列G-CODE
+
+詳細設定請參考:http://atom3dp.squarespace.com/firstlayer-2/
+
+
+
+1. 300Height:用來初步測試X,Y,Z軸以及進料狀況，由於僅有一圈路徑，層與層間比較會受溫度影響，呈現波紋狀為正常現象。
+
+2. Pixel Star:已連續的直角路徑用來檢查滑台，滑軌螺絲是否有鎖緊，皮帶是否有繃緊等狀況。
+
+3. Effiel_Tower:底部為20mm*20mm，高45mm的小艾菲爾鐵塔，使用了kisslicer V1.5的新功能Brim, Pillar, 以及使用側吹風扇輔助冷卻，幫助細小模型成型冷卻。
+
+4. 50x50Vase_for_calibration:用以列印尺寸校正。 
+

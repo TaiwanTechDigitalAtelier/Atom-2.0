@@ -1,0 +1,5 @@
+Unlock Code
+[R]
+[(R*R2-MN)%63]
+[R2]
+[sum(A+B+C)%63]
